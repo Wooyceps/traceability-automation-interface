@@ -10,6 +10,45 @@ from easygui import *
 
 SERVICE = Service(executable_path="chromeDRIVER.exe")
 DRIVER = webdriver.Chrome(service=SERVICE)
+choices = {}
+
+
+def gui():
+    title = "BAZA DANYCH"
+    text = "Wprowadź tyski database np. FAAR, BMW, PSA"
+    choices.update({"baza danych": enterbox(text, title)})
+
+    title = "PRZEDZIAŁ CZASOWY 1"
+    text = "Wprowadź:"
+    input_list = ["Rok", "Miesiąc", "Dzień", "Godzina", "Minuta"]
+    cur = datetime.now()
+    default_list = [cur.year, cur.month, cur.day, cur.hour, cur.minute]
+    date_lst = [int(element) for element in multenterbox(text, title, input_list, default_list)]
+    start = datetime(date_lst[0], date_lst[1], date_lst[2], date_lst[3], date_lst[4])
+    choices.update({
+        "start": start.strftime("%Y-%m-%d %H:%M")
+    })
+
+    title = "PRZEDZIAŁ CZASOWY 2"
+    text = "Wprowadź:"
+    input_list = ["Ilośc godzin", "Ilośc minut"]
+    default_list = ["1", "0"]
+    time_lst = [int(element) for element in multenterbox(text, title, input_list, default_list)]
+    choices.update({
+        "koniec": (start + timedelta(hours=time_lst[0], minutes=time_lst[1])).strftime("%Y-%m-%d %H:%M")
+    })
+
+    title = "LINIA I GRUPA"
+    text = "Wprowadź:"
+    input_list = ["Linia", "Grupa"]
+    l_g = multenterbox(text, title, input_list)
+    choices.update({
+        "linia": l_g[0],
+        "grupa": l_g[1],
+    })
+
+    for k, v in choices.items():
+        print(f"{k}: {v}")
 
 
 def get_present_element(locator, loc_text, w_time=15):
@@ -36,18 +75,16 @@ def select_database(database_name):
     lt.click()
 
 
-def select_date_range(y, m, d, h, min, dur_h=1, dur_min=0):
-    date = datetime(y, m, d, h, min)
-    start = date.strftime("%Y.%m.%d %H:%M")
-    end = (date + timedelta(hours=dur_h, minutes=dur_min)).strftime("%Y.%m.%d %H:%M")
-    print(f"date range: from {start} to {end}")    # DEBUG
-    date_select = get_present_element(By.XPATH, '//*[@id="tx_StartDate"]')
-    date_select.clear()
-    date_select.send_keys(start + Keys.TAB + end)
+def select_date_range(start, end):
+    start_date = get_present_element(By.XPATH, '//*[@id="tx_StartDate"]')
+    start_date.send_keys(start + Keys.TAB)
+    end_date = get_present_element(By.XPATH, '//*[@id="tx_EndDate"]')
+    end_date.send_keys(end + Keys.TAB)
 
 
 def select_line(line_name):
     line_select = get_present_element(By.XPATH, '//*[@id="sl_Cell_chosen"]')
+    time.sleep(0.1)
     line_select.click()
     lines = get_present_elements(By.CLASS_NAME, "active-result")
     for line in lines:
@@ -63,10 +100,6 @@ def select_group(group_name):
     time.sleep(0.1)
     groups = get_present_elements(By.CLASS_NAME, 'active-result')
 
-    print("Groups:")
-    for group in groups:
-        print(group.text)
-
     group_search = get_present_element(By.XPATH, '//*[@id="sl_Group_chosen"]/div/div/input')
     group_search.send_keys(group_name + Keys.ENTER)
 
@@ -76,20 +109,23 @@ def select_csv_and_download():
     export_csv.click()
 
     start_search = get_present_element(By.XPATH, '//*[@id="bt_Search"]')
-    # start_search.click()
+    start_search.click()
 
 
-DRIVER.get("http://pltyc-nextraceweb/")
+if __name__ == "__main__":
+    gui()
 
-select_database("FAAR")
+    DRIVER.get("http://pltyc-nextraceweb/")
 
-select_date_range(2024, 7, 16, 10, 0, 1, 20)
+    select_database(choices["baza danych"])
 
-select_line("Final")
+    select_date_range(choices["start"], choices["koniec"])
 
-select_group("Final")
+    select_line(choices["linia"])
 
-select_csv_and_download()
+    select_group(choices["grupa"])
 
-time.sleep(3)
-DRIVER.quit()
+    select_csv_and_download()
+
+    time.sleep(10)
+    DRIVER.quit()
