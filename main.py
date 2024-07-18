@@ -5,79 +5,91 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 import time
+from datetime import datetime, timedelta
 from easygui import *
 
-service = Service(executable_path="chromedriver.exe")
-driver = webdriver.Chrome(service=service)
+SERVICE = Service(executable_path="chromeDRIVER.exe")
+DRIVER = webdriver.Chrome(service=SERVICE)
 
 
 def get_present_element(locator, loc_text, w_time=15):
-    WebDriverWait(driver, w_time).until(
+    WebDriverWait(DRIVER, w_time).until(
         expected_conditions.presence_of_element_located((locator, loc_text))
     )
-    return driver.find_element(locator, loc_text)
+    return DRIVER.find_element(locator, loc_text)
 
 
 def get_present_elements(locator, loc_text, w_time=15):
-    WebDriverWait(driver, w_time).until(
+    WebDriverWait(DRIVER, w_time).until(
         expected_conditions.presence_of_element_located((locator, loc_text))
     )
-    return driver.find_elements(locator, loc_text)
+    return DRIVER.find_elements(locator, loc_text)
 
 
-def date_range(y, m, d, h, min, dur_min=60):  # Argumenty wysyłane jako stringi
-    dur_min = int(dur_min)
-    return (y + "." + m + "." + d + " " + h + ":" + m,
-            y + "." + m + "." + d + " " + str(dur_min // 60) + ":" + str(
-                dur_min % 60))  # przedział czasowy w formacie: YYYY-MM-DD HH:MM
+def select_database(database_name):
+    databases = get_present_elements(By.CLASS_NAME, "list-group-item")
+    for database in databases:
+        if database_name in database.text:
+            database.click()
+            break
+    lt = get_present_element(By.XPATH, '//*[@id="report"]/button[2]')
+    lt.click()
 
 
-def select_database():
-    pass
+def select_date_range(y, m, d, h, min, dur_h=1, dur_min=0):
+    date = datetime(y, m, d, h, min)
+    start = date.strftime("%Y.%m.%d %H:%M")
+    end = (date + timedelta(hours=dur_h, minutes=dur_min)).strftime("%Y.%m.%d %H:%M")
+    print(f"date range: from {start} to {end}")    # DEBUG
+    date_select = get_present_element(By.XPATH, '//*[@id="tx_StartDate"]')
+    date_select.clear()
+    date_select.send_keys(start + Keys.TAB + end)
 
-driver.get("http://pltyc-nextraceweb/")
 
-databases = get_present_elements(By.CLASS_NAME, "list-group-item")
-for database in databases:
-    if "FAAR" in database.text:
-        database.click()
-        break
+def select_line(line_name):
+    line_select = get_present_element(By.XPATH, '//*[@id="sl_Cell_chosen"]')
+    line_select.click()
+    lines = get_present_elements(By.CLASS_NAME, "active-result")
+    for line in lines:
+        if line_name in line.text:
+            line.click()
+            break
 
-lt = get_present_element(By.XPATH, '//*[@id="report"]/button[2]')
-lt.click()
 
-date_range = date_range("2024", "07", "16", "10", "00", 180)
+def select_group(group_name):
+    group_select = get_present_element(By.XPATH, '//*[@id="sl_Group_chosen"]')
+    time.sleep(0.1)
+    group_select.click()
+    time.sleep(0.1)
+    groups = get_present_elements(By.CLASS_NAME, 'active-result')
 
-date_select = get_present_element(By.XPATH, '//*[@id="tx_StartDate"]')
-date_select.clear()
-date_select.send_keys(date_range[0] + Keys.TAB + date_range[1])
+    print("Groups:")
+    for group in groups:
+        print(group.text)
 
-line_select = get_present_element(By.XPATH, '//*[@id="sl_Cell_chosen"]')
-line_select.click()
+    group_search = get_present_element(By.XPATH, '//*[@id="sl_Group_chosen"]/div/div/input')
+    group_search.send_keys(group_name + Keys.ENTER)
 
-lines = get_present_elements(By.CLASS_NAME, "active-result")
-for line in lines:
-    if "Final" in line.text:
-        line.click()
-        break
 
-group_select = get_present_element(By.XPATH, '//*[@id="sl_Group_chosen"]')
-time.sleep(0.1)
-group_select.click()
-time.sleep(0.1)
+def select_csv_and_download():
+    export_csv = get_present_element(By.XPATH, '//*[@id="inputParams"]/table/tbody/tr[11]/td[2]/label[2]/input')
+    export_csv.click()
 
-groups = get_present_elements(By.CLASS_NAME, 'active-result')
-for group in groups:
-    print(group.text)
+    start_search = get_present_element(By.XPATH, '//*[@id="bt_Search"]')
+    # start_search.click()
 
-group_search = get_present_element(By.XPATH, '//*[@id="sl_Group_chosen"]/div/div/input')
-group_search.send_keys("Final" + Keys.ENTER)
 
-export_csv = get_present_element(By.XPATH, '//*[@id="inputParams"]/table/tbody/tr[11]/td[2]/label[2]/input')
-export_csv.click()
+DRIVER.get("http://pltyc-nextraceweb/")
 
-start_search = get_present_element(By.XPATH, '//*[@id="bt_Search"]')
-start_search.click()
+select_database("FAAR")
 
-time.sleep(10)
-driver.quit()
+select_date_range(2024, 7, 16, 10, 0, 1, 20)
+
+select_line("Final")
+
+select_group("Final")
+
+select_csv_and_download()
+
+time.sleep(3)
+DRIVER.quit()
