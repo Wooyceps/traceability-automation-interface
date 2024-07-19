@@ -7,48 +7,74 @@ from selenium.webdriver.support import expected_conditions
 import time
 from datetime import datetime, timedelta
 from easygui import *
+from os import listdir, getcwd
+from os.path import isfile, join, splitext, getctime
 
 SERVICE = Service(executable_path="chromeDRIVER.exe")
 DRIVER = webdriver.Chrome(service=SERVICE)
 choices = {}
 
 
-def gui():
-    title = "BAZA DANYCH"
-    text = "Wprowadź tyski database np. FAAR, BMW, PSA"
-    choices.update({"baza danych": enterbox(text, title)})
+def gui_and_log():
+    is_log = 'LOG.txt' in listdir(getcwd())
 
-    title = "PRZEDZIAŁ CZASOWY 1"
+    if is_log: # istnieje LOG.txt
+        with open('LOG.txt', "r") as file:
+            lines = [line.rstrip().split() for line in file]
+        for line in lines:
+            if len(line) == 3:
+                choices.update({line[0].rstrip(':'): f"{line[1]} {line[2]}"})
+            else:
+                choices.update({line[0].rstrip(':'): line[1]})
+
+        title = "MODYFIKACJE"
+        message = "Czy chcesz zmodyfikować ostatnie dane wejściowe?"
+        yes_no = ["TAK", "NIE"]
+        output = ynbox(message, title, yes_no)
+
+        if output: # chce modyfikowac - gui z defaultowymi wartosciami
+            gui_settings(True)
+        else: # nie chce modyfikowac
+            print("choices bez modyfikacji ", choices)
+
+    else: # nie znaleziono LOG.txt
+        gui_settings(False)
+        with open('LOG.txt', "w") as file:
+            for k, v in choices.items():
+                file.write(f"{k}: {v}\n")
+
+
+def gui_settings(log_exists):
+    title = "USTAWIENIA"
     text = "Wprowadź:"
-    input_list = ["Rok", "Miesiąc", "Dzień", "Godzina", "Minuta"]
-    cur = datetime.now()
-    default_list = [cur.year, cur.month, cur.day, cur.hour, cur.minute]
-    date_lst = [int(element) for element in multenterbox(text, title, input_list, default_list)]
-    start = datetime(date_lst[0], date_lst[1], date_lst[2], date_lst[3], date_lst[4])
-    choices.update({
-        "start": start.strftime("%Y-%m-%d %H:%M")
-    })
-
-    title = "PRZEDZIAŁ CZASOWY 2"
-    text = "Wprowadź:"
-    input_list = ["Ilośc godzin", "Ilośc minut"]
-    default_list = ["1", "0"]
-    time_lst = [int(element) for element in multenterbox(text, title, input_list, default_list)]
-    choices.update({
-        "koniec": (start + timedelta(hours=time_lst[0], minutes=time_lst[1])).strftime("%Y-%m-%d %H:%M")
-    })
-
-    title = "LINIA I GRUPA"
-    text = "Wprowadź:"
-    input_list = ["Linia", "Grupa"]
-    l_g = multenterbox(text, title, input_list)
-    choices.update({
-        "linia": l_g[0],
-        "grupa": l_g[1],
-    })
-
-    for k, v in choices.items():
-        print(f"{k}: {v}")
+    input_list = [
+        "Ścieżka do pobranych (/)",
+        "Tyska baza danych (np. FAAR, BMW)",
+        "Początek (yyyy-mm-dd hh:mm)",
+        "Koniec   (yyyy-mm-dd hh:mm)",
+        "Linia",
+        "Grupa"
+    ]
+    if log_exists:
+        default_list = [
+            choices["dow_path"],
+            choices["baza_d"],
+            choices["start"],
+            choices["koniec"],
+            choices["linia"],
+            choices["grupa"]
+        ]
+        elements = multenterbox(text, title, input_list, default_list)
+        for i, (k, v) in enumerate(choices.items()):
+            print(k, elements[i])
+            choices[k] = elements[i]
+        print("choices z gui (log jest) ", choices)
+    else:
+        elements = multenterbox(text, title, input_list) # bez defaultów
+        dir_keys = ["dow_path", "baza_d", "start", "koniec", "linia", "grupa"]
+        for i, key in enumerate(dir_keys):
+            choices.update({key: elements[i]})
+        print("choices z gui (loga nie ma) ", choices)
 
 
 def get_present_element(locator, loc_text, w_time=15):
@@ -113,11 +139,11 @@ def select_csv_and_download():
 
 
 if __name__ == "__main__":
-    gui()
+    gui_and_log()
 
     DRIVER.get("http://pltyc-nextraceweb/")
 
-    select_database(choices["baza danych"])
+    select_database(choices["baza_d"])
 
     select_date_range(choices["start"], choices["koniec"])
 
