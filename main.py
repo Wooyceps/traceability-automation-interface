@@ -21,10 +21,7 @@ def gui_and_log():
         with open('LOG.txt', "r") as file:
             lines = [line.rstrip().split() for line in file]
         for line in lines:
-            if len(line) == 3:
-                choices.update({line[0].rstrip(':'): f"{line[1]} {line[2]}"})
-            else:
-                choices.update({line[0].rstrip(':'): line[1]})
+            choices.update({line[0].rstrip(':'): " ".join(line[1:])})
         title = "MODYFIKACJE"
         message = "Czy chcesz zmodyfikować ostatnie dane wejściowe?"
         yes_no = ["TAK", "NIE"]
@@ -125,7 +122,8 @@ def select_csv_download_move():
     start_search = get_present_element(By.XPATH, '//*[@id="bt_Search"]')
     start_search.click()
 
-    download_path = "C:/Users/CZZ2RE/Downloads"
+    download_path = choices["dow_path"]
+    time.sleep(1)
     only_csvs = [f for f in listdir(download_path) if isfile(join(download_path, f)) and splitext(f)[1] == ".csv"]
     times = [getctime(join(download_path, csv)) for csv in only_csvs]
     latest = only_csvs[times.index(max(times))]

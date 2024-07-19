@@ -1,0 +1,2 @@
+selenium~=4.22.0
+easygui~=0.98.3
