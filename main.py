@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions
 import time
 from datetime import datetime, timedelta
 from easygui import *
-from os import listdir, getcwd, replace
+from os import listdir, getcwd, replace, rename
 from os.path import isfile, join, splitext, getctime
 
 SERVICE = Service(executable_path="chromeDRIVER.exe")
@@ -127,7 +127,9 @@ def select_csv_download_move():
     only_csvs = [f for f in listdir(download_path) if isfile(join(download_path, f)) and splitext(f)[1] == ".csv"]
     times = [getctime(join(download_path, csv)) for csv in only_csvs]
     latest = only_csvs[times.index(max(times))]
-    replace(join(download_path, latest), join(getcwd(), latest))
+    new_name = f"data_{datetime.now().strftime("%y%m%d%H%M%S")}"
+    rename(join(download_path, latest), join(download_path ,new_name))
+    replace(join(download_path, new_name), join(getcwd(), new_name))
 
 
 if __name__ == "__main__":
