@@ -5,14 +5,17 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from easygui import *
 from os import listdir, getcwd, replace, rename
 from os.path import isfile, join, splitext, getctime
+import pandas as pd
 
 SERVICE = Service(executable_path="chromeDRIVER.exe")
 DRIVER = webdriver.Chrome(service=SERVICE)
 choices = {}
+new_name = None
+csv_choices = {}
 
 
 def gui_and_log():
@@ -123,13 +126,54 @@ def select_csv_download_move():
     start_search.click()
 
     download_path = choices["dow_path"]
-    time.sleep(1)
+    time.sleep(2)
     only_csvs = [f for f in listdir(download_path) if isfile(join(download_path, f)) and splitext(f)[1] == ".csv"]
     times = [getctime(join(download_path, csv)) for csv in only_csvs]
     latest = only_csvs[times.index(max(times))]
-    new_name = f"data_{datetime.now().strftime("%y%m%d%H%M%S")}"
+    global new_name
+    new_name = f"data_{datetime.now().strftime("%y%m%d%H%M%S")}.csv"
     rename(join(download_path, latest), join(download_path ,new_name))
     replace(join(download_path, new_name), join(getcwd(), new_name))
+
+
+def trim_csv():
+    output = False
+    prefs_exist = "preferred_data.txt" in listdir(getcwd())
+    if prefs_exist:
+        with open('preferred_data.txt', "r") as file:
+            lines = [line.rstrip().split() for line in file]
+        for line in lines:
+            if line[0] == "serials:":
+                line[1:] = [int(s_n) for s_n in line[1:]] if line[1] != '*' else '*'
+                csv_choices.update({line[0].rstrip(':'): line[1:]})
+            else:
+                csv_choices.update({line[0].rstrip(':'): " ".join(line[1:]).split(",")})
+
+        title = "MODYFIKACJE"
+        message = "Czy chcesz zmodyfikować ostatnie dane wejściowe?"
+        yes_no = ["TAK", "NIE"]
+        output = ynbox(message, title, yes_no)
+    if output or not prefs_exist:  # chce/musze modyfikowac
+        title = "USTAWIENIA"
+        text = "Wprowadź:"
+        input_list = [
+            "Numery seryjne (nr1 nr2 ...)",
+            "Parametry (p1,p2,..."
+        ]
+        elements = multenterbox(text, title, input_list)
+        csv_choices["serials"] = [int(s_n) for s_n in elements[0].split()] if elements[0] != '*' else '*'
+        csv_choices["params"] = elements[1].split(",")
+        with open('preferred_data.txt', "w") as file:
+            file.write(f"serials: {elements[0]}\n")
+            file.write(f"params: {elements[1]}\n")
+    df = pd.read_csv(new_name, sep=';')
+    df["Serial"] = [int(x) for x in df["Serial"]]
+
+    if '*' in csv_choices["serials"]:
+        new_df = df[csv_choices["params"]].copy()
+    else:
+        new_df = df.loc[df['Serial'].isin(csv_choices["serials"]), csv_choices["params"]].copy()
+    return new_df
 
 
 if __name__ == "__main__":
@@ -146,5 +190,6 @@ if __name__ == "__main__":
     select_group(choices["grupa"])
     select_csv_download_move()
 
-    time.sleep(10)
     DRIVER.quit()
+
+    trim_csv().to_csv("trimmed_data.csv", sep=";", index=False)
