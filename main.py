@@ -6,10 +6,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 import time
 from datetime import datetime
-from easygui import *
 from os import listdir, getcwd, replace, rename
 from os.path import isfile, join, splitext, getctime
 import pandas as pd
+import sys
 
 SERVICE = Service(executable_path="chromeDRIVER.exe")
 DRIVER = webdriver.Chrome(service=SERVICE)
@@ -19,50 +19,12 @@ csv_choices = {}
 
 
 def gui_and_log():
-    is_log = 'LOG.txt' in listdir(getcwd())
-    if is_log: # istnieje LOG.txt
-        with open('LOG.txt', "r") as file:
-            lines = [line.rstrip().split() for line in file]
-        for line in lines:
-            choices.update({line[0].rstrip(':'): " ".join(line[1:])})
-        title = "MODYFIKACJE"
-        message = "Czy chcesz zmodyfikować ostatnie dane wejściowe?"
-        yes_no = ["TAK", "NIE"]
-        output = ynbox(message, title, yes_no)
-        if output: # chce modyfikowac - gui z defaultowymi wartosciami
-            gui_settings(True)
-        else: # nie chce modyfikowac
-            pass
-    else: # nie znaleziono LOG.txt
-        gui_settings(False)
-
-
-def gui_settings(log_exists):
-    title = "USTAWIENIA"
-    text = "Wprowadź:"
-    input_list = [
-        "Ścieżka do pobranych (/)", "Tyska baza danych (np. FAAR, BMW)", "Początek (yyyy-mm-dd hh:mm)",
-        "Koniec   (yyyy-mm-dd hh:mm)", "Linia", "Grupa"
-    ]
-    if log_exists:
-        default_list = [
-            choices["dow_path"], choices["baza_d"], choices["start"],
-            choices["koniec"], choices["linia"], choices["grupa"]
-        ]
-        elements = multenterbox(text, title, input_list, default_list)
-        for i, (k, v) in enumerate(choices.items()):
-            print(k, elements[i])
-            choices[k] = elements[i]
-        print("choices z gui (log jest) ", choices)
-    else:
-        elements = multenterbox(text, title, input_list) # bez defaultów
-        dir_keys = ["dow_path", "baza_d", "start", "koniec", "linia", "grupa"]
-        for i, key in enumerate(dir_keys):
-            choices.update({key: elements[i]})
-        print("choices z gui (loga nie ma) ", choices)
-    with open('LOG.txt', "w") as file:
-        for k, v in choices.items():
-            file.write(f"{k}: {v}\n")
+    if not ('settings_data.ini' in listdir(getcwd())): # NIE istnieje settings_data.in
+        sys.exit("settings_data.ini not found")
+    with open('settings_data.ini', "r") as file:
+        lines = [line.rstrip().split() for line in file]
+    for line in lines:
+        choices.update({line[0].rstrip(':'): " ".join(line[1:])})
 
 
 def get_present_element(locator, loc_text, w_time=15):
@@ -112,7 +74,6 @@ def select_group(group_name):
     time.sleep(0.1)
     group_select.click()
     time.sleep(0.1)
-    groups = get_present_elements(By.CLASS_NAME, 'active-result')
 
     group_search = get_present_element(By.XPATH, '//*[@id="sl_Group_chosen"]/div/div/input')
     group_search.send_keys(group_name + Keys.ENTER)
@@ -137,10 +98,8 @@ def select_csv_download_move():
 
 
 def trim_csv():
-    output = False
-    prefs_exist = "preferred_data.txt" in listdir(getcwd())
-    if prefs_exist:
-        with open('preferred_data.txt', "r") as file:
+    if "preferred_data.ini" in listdir(getcwd()):
+        with open('preferred_data.ini', "r") as file:
             lines = [line.rstrip().split() for line in file]
         for line in lines:
             if line[0] == "serials:":
@@ -149,26 +108,11 @@ def trim_csv():
             else:
                 csv_choices.update({line[0].rstrip(':'): " ".join(line[1:]).split(",")})
 
-        title = "MODYFIKACJE"
-        message = "Czy chcesz zmodyfikować ostatnie dane wejściowe?"
-        yes_no = ["TAK", "NIE"]
-        output = ynbox(message, title, yes_no)
-    if output or not prefs_exist:  # chce/musze modyfikowac
-        title = "USTAWIENIA"
-        text = "Wprowadź:"
-        input_list = [
-            "Numery seryjne (nr1 nr2 ...)",
-            "Parametry (p1,p2,..."
-        ]
-        elements = multenterbox(text, title, input_list)
-        csv_choices["serials"] = [int(s_n) for s_n in elements[0].split()] if elements[0] != '*' else '*'
-        csv_choices["params"] = elements[1].split(",")
-        with open('preferred_data.txt', "w") as file:
-            file.write(f"serials: {elements[0]}\n")
-            file.write(f"params: {elements[1]}\n")
+    else:  # nie ma pliku
+        sys.exit("preferred_data.ini not found")
+
     df = pd.read_csv(new_name, sep=';')
     df["Serial"] = [int(x) for x in df["Serial"]]
-
     if '*' in csv_choices["serials"]:
         new_df = df[csv_choices["params"]].copy()
     else:
