@@ -150,6 +150,20 @@ def trim_csv():
         sys.exit(f"unable to reformat {new_name}, see GUIDE.txt")
 
 
+def format_csv_for_minitab():
+    df = pd.read_csv(join(choices["targ_path"], "trimmed_data.csv"), sep=";", index_col=False)
+    for serial in csv_choices["serials"]:
+        df.replace(to_replace=str(serial), value=("'" + str(serial)), inplace=True)
+    dims = df.shape
+    for row in range(dims[0]):
+        for col in range(dims[1]):
+            df.iloc[row, col] = str(df.iloc[row, col]).replace('.', ',')
+    for ts in df["Timestamp"]:
+        df.replace(to_replace=ts, value=datetime.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%d.%m.%Y %H:%M:%S"),
+                   inplace=True)
+    df.to_csv(join(choices["targ_path"], "trimmed_data.csv"), sep=';', index=False)
+
+
 if __name__ == "__main__":
     gui_and_log()
 
@@ -169,4 +183,6 @@ if __name__ == "__main__":
 
     trim_csv()
 
-    msgbox(f"File acquired and trimmed.", "Success", "OK")
+    format_csv_for_minitab()
+
+    msgbox(f"File acquired, trimmed and refactored for minitab.", "Success", "OK")
