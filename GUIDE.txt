@@ -14,6 +14,7 @@ start:      Poczatek przedziału czasowego w formacie YYYY-MM-DD HH:MM   np. 202
 koniec:     Koniec przedziału czasowego w formacie YYYY-MM-DD HH:MM     np. 2024-07-16 11:00
 linia:      Fragment lub cała nazwa lini                                np. Final
 grupa:      Fragment lub cała nazwa grupy                               np. FFT #1 (data)
+targ_path:  Ścieżka do docelowego folderu, UŻYWAMY /, A NIE \           np. C:/Users/CZZ2RE/OneDrive - NEXTEER AUTOMOTIVE/Desktop
 
 Wypełnianie preferred_data.ini:
 
