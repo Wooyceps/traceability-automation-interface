@@ -13,7 +13,7 @@ In order for the `main.py` script to work certain requirements must be met:
 - User must have python 3.12 version installed on his machine.
 - Libraries from `requirements.txt` must be installed. This can be done easily by running `pip install -r requirements.txt` in terminal.
 - There must be `chromedriver.exe` file in project directory. You can install one here: [chromedriver download](https://googlechromelabs.github.io/chrome-for-testing/#stable)
-- Lastly, there must be two **.ini** files in the project directory:
+- Lastly, the two **.ini** files in the project directory must by filled:
   - `settings_data.ini` specifying pre-csv-download settings
   - `preferred_data.ini` specifying serial numbers and parameters for downsizing the **.csv** file.
 
