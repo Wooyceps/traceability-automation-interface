@@ -13,3 +13,5 @@ Wypełnianie preferred_data.ini:
 
 serials:    numery seryjne poszukiwanych części ODDZIELANE SPACJĄ       np. 38289805 38289806
 params:     rozpatrywane parametry ODDZIELONE SAMYMI PRZECINKAMI        np. Serial,DA1 Ave Force CW [N]
+
+Oba pliki muszą znajdować się w tym samym katalogu co main.py, a wartości wymienionych zmiennych powinna oddzielać od nich spacja.
