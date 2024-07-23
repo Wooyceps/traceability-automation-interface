@@ -20,7 +20,7 @@ csv_choices = {}
 
 def gui_and_log():
     if not ('settings_data.ini' in listdir(getcwd())): # NIE istnieje settings_data.in
-        sys.exit("settings_data.ini not found")
+        sys.exit("settings_data.ini not found, see GUIDE.txt")
     with open('settings_data.ini', "r") as file:
         lines = [line.rstrip().split() for line in file]
     for line in lines:
@@ -109,7 +109,7 @@ def trim_csv():
                 csv_choices.update({line[0].rstrip(':'): " ".join(line[1:]).split(",")})
 
     else:  # nie ma pliku
-        sys.exit("preferred_data.ini not found")
+        sys.exit("preferred_data.ini not found, see GUIDE.txt")
 
     df = pd.read_csv(new_name, sep=';')
     df["Serial"] = [int(x) for x in df["Serial"]]
