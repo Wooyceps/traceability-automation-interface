@@ -1,0 +1,24 @@
+PL:
+
+Przed uruchomieniem skryptu w folderze projektu musi być zainstalowany najnowszy python oraz sterownik chrome dla odpowiedniego OS: https://googlechromelabs.github.io/chrome-for-testing/#stable
+
+Zainstalowane muszą być również biblioteki używane w projekcie, to można zrobić najszybciej w ten sposób:
+1. Skopiować ścieżkę (adres) do pliku requirements.txt znajdującego się w katalogu projektu
+2. W cmd wpisać:    py -m pip install -r twoja\skopiowana\ścieżka\do\requirements.txt
+
+Wypełnianie settings_data.ini:
+
+dow_path:   Ścieżka do folderu z pobranymi plikami, UŻYWAMY /, A NIE \  np. C:/Users/CZZ2RE/Downloads
+baza_d:     Fragment lub cała nazwa tyskiej bazy danych                 np. K0
+start:      Poczatek przedziału czasowego w formacie YYYY-MM-DD HH:MM   np. 2024-07-16 10:00
+koniec:     Koniec przedziału czasowego w formacie YYYY-MM-DD HH:MM     np. 2024-07-16 11:00
+linia:      Fragment lub cała nazwa lini                                np. Final
+grupa:      Fragment lub cała nazwa grupy                               np. FFT #1 (data)
+targ_path:  Ścieżka do docelowego folderu, UŻYWAMY /, A NIE \           np. C:/Users/CZZ2RE/OneDrive - NEXTEER AUTOMOTIVE/Desktop
+
+Wypełnianie preferred_data.ini:
+
+serials:    numery seryjne poszukiwanych części ODDZIELANE SPACJĄ       np. 38289805 38289806
+params:     rozpatrywane parametry ODDZIELONE SAMYMI PRZECINKAMI        np. Serial,DA1 Ave Force CW [N]
+
+Oba pliki muszą znajdować się w tym samym katalogu co main.py, a wartości wymienionych zmiennych powinna oddzielać od nich spacja.
