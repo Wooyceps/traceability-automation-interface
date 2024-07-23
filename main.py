@@ -168,3 +168,5 @@ if __name__ == "__main__":
     DRIVER.quit()
 
     trim_csv()
+
+    msgbox(f"File acquired and trimmed.", "Success", "OK")
